@@ -1,6 +1,7 @@
 ﻿using EFCore.Dominio;
 using EFCore.Repo;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,13 +24,17 @@ namespace WebApp.Controllers
         public ActionResult Getfiltro(string nome)
         {
             var listHeroi = _context.Herois
-                .Where(h => h.Nome.Contains(nome))
-                .ToList();
+                .Where(h => EF.Functions.Like(h.Nome, $"%{nome}%"))
+                .OrderBy(h => h.Id)
+                .LastOrDefault();
+            //var listHeroi = _context.Herois
+            //    .Where(h => h.Nome.Contains(nome))
+            //    .ToList();
             //var listHeroi = (from heroi in _context.Herois
             //                 where heroi.Nome.Contains(nome)
             //                 select heroi).ToList();
 
-           return Ok(listHeroi);
+            return Ok(listHeroi);
         }
        
         // GET api/values/5
