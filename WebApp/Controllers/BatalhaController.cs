@@ -15,18 +15,20 @@ namespace WebApp.Controllers
     [ApiController]
     public class BatalhaController : ControllerBase
     {
-        private readonly HeroiContext _context;
-        public BatalhaController(HeroiContext context)
+        private readonly IEFCoreRepository _repo;
+
+        public BatalhaController(IEFCoreRepository Repo)
         {
-            _context = context;
+            _repo = Repo;
         }
         // GET: api/<BatalhaController1>
         [HttpGet]
-        public ActionResult Get()
+        public async Task<IActionResult>  Get()
         {
             try
             {
-                return Ok(new Batalha());
+                var herois = await _repo.GetAllBatalhas(true);
+                return Ok(herois);
             }
             catch (Exception ex)
             {
@@ -36,54 +38,81 @@ namespace WebApp.Controllers
 
         // GET api/<BatalhaController1>/5
         [HttpGet("{id}", Name = "GetBatalha")]
-        public string Get(int id)
+        public async Task<IActionResult> Get(int id)
         {
-            return "value";
+            try
+            {
+                var herois = await _repo.GetBatalhaById(id, true);
+                return Ok(herois);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Erro : { ex }");
+            }
         }
 
         // POST api/<BatalhaController1>
         [HttpPost]
-        public ActionResult Post(Batalha model)
+        public async Task<IActionResult> Post(Batalha model)
         {
             try
             {
+                _repo.Add(model);
 
-                Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<Batalha> entityEntry = _context.Batalhas.Add(model);
-                _context.SaveChanges();
-
-                return Ok("BAZINGA");
+                if (await _repo.SaveChangAsync())
+                {
+                    return Ok("BAZINGA");
+                }
             }
             catch (Exception ex)
             {
                 return BadRequest($"Erro : { ex }");
             }
+            return BadRequest("Não Salvou");
         }
 
         // PUT api/<BatalhaController1>/5
         [HttpPut("{id}")]
-        public ActionResult Put(int id, Batalha model)
+        public async Task<IActionResult> Put(int id, Batalha model)
         {
             try
             {
-                if (_context.Batalhas.AsNoTracking().FirstOrDefault(h => h.Id == id) != null)
+                var heroi = await _repo.GetBatalhaById(id);
+                if (heroi != null)
                 {
-                    _context.Batalhas.Update(model);
-                    _context.SaveChanges();
-                    return Ok("BAZINGA");
-                }
+                    _repo.Update(model);
 
-                return Ok("Não encontrado!");
+                    if (await _repo.SaveChangAsync())
+                        return Ok("BAZINGA");
+                }
             }
             catch (Exception ex)
             {
                 return BadRequest($"Erro : { ex }");
             }
+            return BadRequest("Não Atualizado");
         }
 
         // DELETE api/<BatalhaController1>/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
+            try
+            {
+                var heroi = await _repo.GetBatalhaById(id);
+                if (heroi != null)
+                {
+                    _repo.Delete(heroi);
+
+                    if (await _repo.SaveChangAsync())
+                    return Ok("BAZINGA");
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Erro : { ex }");
+            }
+            return BadRequest("Não Deletado");
         }
     }
 }
